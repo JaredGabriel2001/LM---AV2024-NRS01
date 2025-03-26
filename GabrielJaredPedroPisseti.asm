@@ -1,59 +1,58 @@
 ; nasm -f elf64 GabrielJaredPedroPisseti.asm ; gcc -m64 -no-pie GabrielJaredPedroPisseti.o -o GabrielJaredPedroPisseti.x
-; nasm -f elf64 GabrielJaredPedroPisseti.asm -o GabrielJaredPedroPisseti.o ; ld GabrielJaredPedroPisseti.o -o GabrielJaredPedroPisseti.x
-section .data
-    prompt1 db "Vetor de temperaturas (°C): ", 0   ; Mensagem para o primeiro vetor
-    prompt2 db "Vetor de umidade relativa (%): ", 0 ; Mensagem para o segundo vetor
 
+section .data
+    temperatura : db "Vetor de temperaturas (°C): ", 0   
+    umidade     : db "Vetor de umidade relativa (%):  ", 0 
+    scanTemp    : db "%f, %f, %f, %f, %f", 0
+    scanUmi     : db "%f, %f, %f, %f, %f", 0
+    printMedTemp: db "%.1f", 10, 0
+    printMedUmi : db "%.1f", 10, 0
+    ; printConver : 
 section .bss
-    input resb 100              ; Buffer para entrada do usuário
-    vetor1 resq 5               ; Espaço para 5 números em ponto flutuante
-    vetor2 resq 5               ; Espaço para 5 números em ponto flutuante
+
+    vetTemp resd 5               
+    vetUmi  resd 5              
 
 section .text
-    global _start
+    global main
+    extern scanf, printf
 
-_start:
-    ; Limpa o buffer antes de usar
-    mov rdi, input              ; Aponta para o buffer
-    mov rcx, 100                ; Tamanho do buffer
-    xor rax, rax                ; RAX = 0
-rep stosb                        ; Preenche com zeros
+main:
+    push rbp
+    mov rbp, rsp
 
-    ; Exibe a mensagem para o primeiro vetor
-    mov rax, 1                  ; Código do syscall para write
-    mov rdi, 1                  ; Saída padrão (stdout)
-    mov rsi, prompt1            ; Mensagem para o primeiro vetor
-    mov rdx, 28                 ; Tamanho da mensagem
-    syscall
+    xor rax, rax
+    mov rdi, temperatura 
+    mov esi, 1
+    call printf
 
-    ; Lê a entrada do usuário para o primeiro vetor
-    mov rax, 0                  ; Código do syscall para read
-    mov rdi, 0                  ; Entrada padrão (stdin)
-    mov rsi, input              ; Buffer de entrada
-    mov rdx, 100                ; Tamanho máximo da entrada
-    syscall
+    ;lendo temperaturas
+    xor rax, rax
+    mov rdi, scanTemp
+    lea rsi, [vetTemp] 
+    lea rdx, [vetTemp+4]
+    lea rcx, [vetTemp+8] 
+    lea r8, [vetTemp+12]
+    lea r9, [vetTemp+16]
+    call scanf
 
-    ; Limpa o buffer antes da próxima entrada
-    mov rdi, input              ; Aponta para o buffer
-    mov rcx, 100                ; Tamanho do buffer
-    xor rax, rax                ; RAX = 0
-rep stosb                        ; Preenche com zeros
+    xor rax, rax
+    mov rdi, umidade 
+    mov esi, 1
+    call printf
 
-    ; Exibe a mensagem para o segundo vetor
-    mov rax, 1                  ; Código do syscall para write
-    mov rdi, 1                  ; Saída padrão (stdout)
-    mov rsi, prompt2            ; Mensagem para o segundo vetor
-    mov rdx, 35                 ; Tamanho da mensagem
-    syscall
+    ;lendo temperaturas
+    xor rax, rax
+    mov rdi, scanTemp
+    lea rsi, [vetUmi] 
+    lea rdx, [vetUmi+4]
+    lea rcx, [vetUmi+8] 
+    lea r8,  [vetUmi+12]
+    lea r9,  [vetUmi+16]
+    call scanf
 
-    ; Lê a entrada do usuário para o segundo vetor
-    mov rax, 0                  ; Código do syscall para read
-    mov rdi, 0                  ; Entrada padrão (stdin)
-    mov rsi, input              ; Buffer de entrada
-    mov rdx, 100                ; Tamanho máximo da entrada
-    syscall
+media:
 
-    ; Fim do programa
-    mov rax, 60                 ; Código do syscall para exit
-    xor rdi, rdi                ; Código de saída 0
-    syscall
+converter:
+
+fim:
