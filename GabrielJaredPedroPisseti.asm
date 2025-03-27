@@ -1,23 +1,28 @@
-; nasm -f elf64 GabrielJaredPedroPisseti.asm ; gcc -m64 -no-pie GabrielJaredPedroPisseti.o -o GabrielJaredPedroPisseti.x
+; nasm -f elf64 -g -F dwarf GabrielJaredPedroPisseti.asm ; gcc -m64 -no-pie -g GabrielJaredPedroPisseti.o -o GabrielJaredPedroPisseti.x
+
 
 section .data
     temperatura : db "Vetor de temperaturas (°C): ", 0   
-    umidade     : db "Vetor de umidade relativa (%):  ", 0 
+    umidade     : db "Vetor de umidade relativa (%): ", 0 
     scanTemp    : db "%f, %f, %f, %f, %f", 0
     scanUmi     : db "%f, %f, %f, %f, %f", 0
-    printMedTemp: db "Média das Temperaturas: %.1f °C", 10, 0
-    printMedUmi : db "Média da Umidade: %.1f%", 10, 0
+    printMedTemp: db "Média das Temperaturas: %.2f °C", 10, 0
+    printMedUmi : db "Média da Umidade: %.2f%", 10, 0
     divisor     : dd 5.0
     resDiv      : dd 1.8 ; resultado da divisão de 9/5
     somaConvert : dd 32.0 ; valor que soma 32 da formula: F=C*(9/5)+32.
     printConver : db "%.1f °C -> %.1f °F", 10, 0
-
+    printMsgConversoes : db "Conversoes:", 10, 0
+    printAnomalia : db "Anomalias: Temperatura %.1f °C fora do intervalo esperado!"
+    
 section .bss
-    vetTemp resd 5               
-    vetUmi  resd 5              
-    resMedTemp  resd 1
-    resMedUmi   resd 1 
-    vetFahrenheit  resd 5
+    vetTemp         resd 5               
+    vetUmi          resd 5              
+    resMedTemp      resd 1
+    resMedUmi       resd 1 
+    vetFahrenheit   resd 5
+    vetAnomalias    resd 5
+    devio_padrao    rest 1
 section .text
     global main
     extern scanf, printf
@@ -87,7 +92,49 @@ media_Umi:
     mov rax, 1
     mov rdi, printMedUmi 
     call printf
+desvio_padrao:
+
+    movss xmm0, [vetTemp]
+    movss xmm1, [resMedTemp]
+    subss xmm0, xmm1
+    mulss xmm0, xmm0
+    addps xmm11, xmm0 ; valor de (xi - X)^2 da primeira posicao do vetor
+
+    movss xmm0, [vetTemp+4]
+    movss xmm1, [resMedTemp]
+    subss xmm0, xmm1
+    mulss xmm0, xmm0
+    addps xmm11, xmm0 ; valor de (xi - X)^2 da segunda posicao do vetor
+
+    movss xmm0, [vetTemp+8]
+    movss xmm1, [resMedTemp]
+    subss xmm0, xmm1
+    mulss xmm0, xmm0
+    addps xmm11, xmm0 ; valor de (xi - X)^2 da terceira posicao do vetor
+
+    movss xmm0, [vetTemp+12]
+    movss xmm1, [resMedTemp]
+    subss xmm0, xmm1
+    mulss xmm0, xmm0
+    addps xmm11, xmm0 ; valor de (xi - X)^2 da quarta posicao do vetor
+
+    movss xmm0, [vetTemp+16]
+    movss xmm1, [resMedTemp]
+    subss xmm0, xmm1
+    mulss xmm0, xmm0
+    addps xmm11, xmm0 ; valor de (xi - X)^2 da quinta posicao do vetor
+
+    divss xmm11, dword [divisor] ; resultado do somatorio de ((xi - X)^2)/n
+    sqrtss xmm11, xmm11    ; resultado da raiz quadrada, ou seja, o desvio padrao está em xmm11
+anomalias:
+    
+    
 converter:
+
+    mov rax, rax
+    mov rdi, printMsgConversoes
+    call printf
+
     ;F=C*(9/5)+32.
     movss xmm0, [vetTemp]
     mulss xmm0, [resDiv]      ; resultado de 9/5
