@@ -13,7 +13,7 @@ section .data
     somaConvert : dd 32.0 ; valor que soma 32 da formula: F=C*(9/5)+32.
     printConver : db "%.1f °C -> %.1f °F", 10, 0
     printMsgConversoes : db "Conversoes:", 10, 0
-    printAnomalia : db "Anomalias: Temperatura %.1f °C fora do intervalo esperado!"
+    printAnomalia : db "Anomalias: Temperatura %.1f °C fora do intervalo esperado!",10,0
     
 section .bss
     vetTemp         resd 5               
@@ -127,8 +127,60 @@ desvio_padrao:
     divss xmm11, dword [divisor] ; resultado do somatorio de ((xi - X)^2)/n
     sqrtss xmm11, xmm11    ; resultado da raiz quadrada, ou seja, o desvio padrao está em xmm11
 anomalias:
-    
-    
+    ;vetTemp: temperaturas
+    ;xmm11  : desvio padrao
+    ;vetAnomalias : vetor que armazena indice das anomalias 
+
+    movss xmm0, [resMedTemp]
+    subss xmm0, xmm11        ; calculando limite inferior, xmm0 está com limite inferior
+    movss xmm1, [resMedTemp]
+    addss xmm1, xmm11        ; calculando limite superior, xmm1 está com limite superior
+
+    mov ecx, 5
+    mov esi, vetTemp
+    mov edi, vetAnomalias   ;vetor anomalias
+    xor eax, eax
+    xor r8, r8
+
+verifica_loop:
+    movss xmm4, dword [esi] 
+    comiss xmm4, xmm0       ;limite inferior
+    jb indice_anomalia
+    comiss xmm4, xmm1	    ;limite superior
+    ja indice_anomalia
+
+    jmp passo
+
+indice_anomalia:
+    mov [edi], eax ; indice anomalia	    
+    add edi, 4     ;proxima anomalia
+    inc r8        ; quantidade anomalias
+
+passo:
+    add esi, 4
+    inc eax    
+    dec ecx
+    cmp ecx, 0
+    jne verifica_loop
+
+printar_anomalias:
+    mov r15, r8
+    mov r12, vetAnomalias
+    mov r13, vetTemp
+
+loop_anomalias:
+    mov r14d, [r12]
+    movss xmm0, dword [r13 + r14*4]
+    mov rax, 1
+    mov rdi, printAnomalia
+    CVTSS2SD xmm0, xmm0
+    call printf
+
+    add r12, 4
+    dec r15
+    cmp r15, 0
+    jne loop_anomalias
+
 converter:
 
     mov rax, rax
